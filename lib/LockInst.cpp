@@ -15,6 +15,7 @@
 #include <llvm/Support/InstIterator.h>
 
 #include <sstream>
+#include <time.h>
 
 #include "debug.h"
 
@@ -51,8 +52,15 @@ static std::string judgeType(Type* ty)
    else if(tyid==Type::StructTyID){
       name=name+getString(tyid)+tmp->getStructName().str();
    }
+   else if(tyid==Type::FunctionTyID){
+      std::string tmpname = "";
+      for(unsigned i = 0;i < tmp->getFunctionNumParams();i++)
+         tmpname += getString(tmp->getFunctionParamType(i)->getTypeID());
+      //add the clock number to funciton name
+      name = name+getString(tyid)+tmpname+getString(clock());
+   }
    else
-      name=name+getString(tyid);
+      name=name+getString(tyid)+getString(clock());
    return name;
 }
 
@@ -233,8 +241,8 @@ bool Unlock::runOnModule(Module &M)
 // that is changing the CallInst instruction to the original instruction
 void Unlock::unlock_inst(Instruction* I)
 {
-   //DEBUG(errs()<<"\n\n\nthis ins start!!!\n");
-   //DEBUG(errs()<<"current inst: "<<*I<<"\n");
+   DEBUG(errs()<<"\n\n\nthis ins start!!!\n");
+   DEBUG(errs()<<"current inst: "<<*I<<"\n");
    LLVMContext& C = I->getContext();
    CallInst* CI=cast<CallInst>(I);
    SmallVector<Type*, 8>OpTypes;
@@ -256,8 +264,8 @@ void Unlock::unlock_inst(Instruction* I)
    SmallVector<StringRef, 30> names; 
    C.getMDKindNames(names);
 
-   //for(unsigned i = 0;i < OpArgs.size();i++)
-   //   DEBUG(errs()<<"OpArgs"<<i<<": "<<*OpArgs[i]<<"\n");
+   for(unsigned i = 0;i < OpArgs.size();i++)
+      DEBUG(errs()<<"OpArgs"<<i<<": "<<*OpArgs[i]<<"\n");
 
    //Unlock the LoadInst
    if(cname.find("lock.load") == 0){
